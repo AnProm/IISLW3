@@ -3,7 +3,7 @@ import Dataset.IrisEntity;
 
 import java.util.List;
 
-public class DatasetTest {
+public class DatasetUtilTest {
     public static void main(String[] args) {
         List<IrisEntity> dataset =  DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
         System.out.println("test");
