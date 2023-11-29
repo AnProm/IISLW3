@@ -152,7 +152,7 @@ public class ElmanNetwork {
         return loss / outputSize;
     }
 
-    private List<IrisEntity> shuffle(List<IrisEntity> list) {
+    public List<IrisEntity> shuffle(List<IrisEntity> list) {
         List<IrisEntity> shuffledList = new ArrayList<>(list);
         Collections.shuffle(shuffledList, new Random());
         return shuffledList;
@@ -170,20 +170,7 @@ public class ElmanNetwork {
             };
             inputs.add(input);
 
-            double[] target = new double[outputSize];
-            switch (item.species) {
-                case 0:
-                    target[0] = 1;
-                    break;
-                case 1:
-                    target[1] = 1;
-                    break;
-                case 2:
-                    target[2] = 1;
-                    break;
-                default:
-                    break;
-            }
+            double[] target = convertToTarget(item.species);
             targets.add(target);
         }
 
@@ -195,17 +182,26 @@ public class ElmanNetwork {
 
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalLoss = 0;
+            int correctPredictions = 0;
 
             for (int i = 0; i < trainInputs.size(); i++) {
                 backPropagationWithMomentum(trainInputs.get(i), trainTargets.get(i), lambda, learningRate, momentum);
 
                 double[] output = feedForward(trainInputs.get(i));
                 totalLoss += calculateLoss(output, trainTargets.get(i));
+
+                int predictedClass = getMaxIndex(output);
+                int actualClass = getMaxIndex(trainTargets.get(i));
+
+                if (predictedClass == actualClass) {
+                    correctPredictions++;
+                }
             }
 
             double epochLoss = totalLoss / trainInputs.size();
+            double epochAccuracy = ((double) correctPredictions / trainInputs.size()) * 100;
 
-            System.out.printf("Epoch %d: Loss = %.5f\n", epoch + 1, epochLoss);
+            System.out.printf("Epoch %d: Loss = %.5f, Accuracy = %.5f%%\n", epoch + 1, epochLoss, epochAccuracy);
         }
     }
 
@@ -218,6 +214,7 @@ public class ElmanNetwork {
         ElmanNetwork elmanNet = new ElmanNetwork(inputSize, hiddenSize, outputSize);
 
         List<IrisEntity> irisData = DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
+        irisData = elmanNet.shuffle(irisData);
 
         double lambda = 0.001;
         double learningRate = 0.01;
