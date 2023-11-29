@@ -11,7 +11,6 @@ import javax.swing.*;
 import java.awt.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -147,7 +146,7 @@ public class ElmanNetwork {
     private double calculateLoss(double[] output, double[] target) {
         double loss = 0;
         for (int i = 0; i < outputSize; i++) {
-            loss += Math.pow(target[i] - output[i], 2);
+            loss += Math.pow(target[i] - output[i], 2);// Пример использования квадратичной функции потерь (MSE)
         }
         return loss / outputSize;
     }
@@ -182,27 +181,24 @@ public class ElmanNetwork {
         System.out.println("######[END TRAIN FOR "+epochs+"EPOCHS]######");
         return errors;
     }
-/*
-    private static double[] trainAndGetErrors(List<double[]> trainInputs, List<double[]> trainTargets, List<IrisEntity> data,
-                                              double lambda, double learningRate, double momentum, int epochs) {
-        double[] errors = new double[epochs];
-        for (int epoch = 0; epoch < epochs; epoch++) {
-            double totalLoss = 0;
 
-            for (IrisEntity item : data) {
-                double[] input = {item.sepalLengthCm, item.sepalWidthCm, item.petalLengthCm, item.petalWidthCm};
-                double[] target = convertToTarget(item.species);
+    public double test(List<double[]> testInputs, List<double[]> testTargets) {
+        int correctPredictions = 0;
 
-                elmanNet.backPropagationWithMomentum(input, target, lambda, learningRate, momentum);
+        for (int i = 0; i < testInputs.size(); i++) {
+            double[] output = feedForward(testInputs.get(i));
+            int predictedClass = getMaxIndex(output);
+            int actualClass = getMaxIndex(testTargets.get(i));
 
-                double[] output = elmanNet.feedForward(input);
-                totalLoss += elmanNet.calculateLoss(output, target);
+            if (predictedClass == actualClass) {
+                correctPredictions++;
             }
-
-            errors[epoch] = totalLoss / data.size();
         }
-        return errors;
-    }*/
+
+        double accuracy = ((double) correctPredictions / testInputs.size()) * 100;
+        System.out.printf("Test Accuracy: %.5f%%\n", accuracy);
+        return accuracy;
+    }
 
     public static void main(String[] args) {
         List<IrisEntity> irisData = DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
@@ -230,18 +226,29 @@ public class ElmanNetwork {
 
 
         int inputSize = 4;
-        int hiddenSize = 8;
+        int hiddenSize = 16;
         int outputSize = 3;
 
         ElmanNetwork elmanNet = new ElmanNetwork(inputSize, hiddenSize, outputSize);
+        //4 - ok, 5 - ok, 6 - ok ,7 - ok
 
         double lambda = 0.001;
         double learningRate = 0.01;
         double momentum = 0.9;
-        int epochs = 100;
+        int epochs = 30;
 
-        elmanNet.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochs);
+        //п. 4.1: Погрешность обучения от коэффицента обучения
+        double[] learningRates = {0.01, 0.05, 0.1, 0.2, 0.3};
+        for (double learningR : learningRates) {
+            System.out.println("######[LEARNING RATE: "+learningR+"]######");
+            elmanNet.train(trainInputs, trainTargets, lambda, learningR, momentum, epochs);
+        }
 
+        //elmanNet.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochs);
+
+
+        //п. 5.1: Погрешность обучения от числа нейронов скрытого слоя
+        //п. 7.1: Погрешность обучения от числа эпох
         // Пример использования для построения графиков
         // Значения числа нейронов скрытого слоя для анализа зависимости погрешности обучения
         int[] hiddenLayerSizes = {4, 8, 12, 16, 256};
@@ -249,21 +256,77 @@ public class ElmanNetwork {
 
         DefaultXYDataset errorDataset = new DefaultXYDataset();
 
-        for (int hiddenSize1 : hiddenLayerSizes) {
+        for (int hiddenS : hiddenLayerSizes) {
             double[][] data = new double[2][epochsValues.length];
             for (int i = 0; i < epochsValues.length; i++) {
-                ElmanNetwork elmanNet1 = new ElmanNetwork(inputSize, hiddenSize1, outputSize);
-                System.out.println("############[START TRAIN FOR "+hiddenSize1+" NEURONS]############");
-                double[] errors = elmanNet1.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochsValues[i]);
+                elmanNet = new ElmanNetwork(inputSize, hiddenS, outputSize);
+                System.out.println("############[START TRAIN FOR "+hiddenS+" NEURONS]############");
+                double[] errors = elmanNet.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochsValues[i]);
                 data[0][i] = epochsValues[i];
                 data[1][i] = errors[epochsValues[i] - 1]; // берем ошибку на последней эпохе
             }
-            errorDataset.addSeries("Hidden Layer Size: " + hiddenSize1, data);
+            errorDataset.addSeries("Hidden Layer Size: " + hiddenS, data);
         }
 
         JFreeChart errorChart = createChart("Error vs Epochs", "Epochs", "Error", errorDataset);
 
-        displayChart(errorChart);
+        //displayChart(errorChart);//РАСКОММЕНТИРОВАТЬ
+
+        //п. 5.1/7.1: Погрешность классификации от числа нейронов скрытого слоя и числа эпох (КЛАССИФИКАЦИЯ)
+        DefaultXYDataset classificationErrorDataset = new DefaultXYDataset();
+
+        for (int hiddenS : hiddenLayerSizes) {
+            double[][] data = new double[2][epochsValues.length];
+            for (int i = 0; i < epochsValues.length; i++) {
+                elmanNet = new ElmanNetwork(inputSize, hiddenS, outputSize);
+                //double[] errors = elmanNet.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochsValues[i]);
+                double accuracy = elmanNet.test(testInputs, testTargets);
+
+                data[0][i] = epochsValues[i];
+                data[1][i] = 100 - accuracy; // классификационная погрешность (100 - точность)
+
+                System.out.printf("Hidden Neurons: %d, Epochs: %d, Classification Error: %.5f%%\n",
+                        hiddenS, epochsValues[i], data[1][i]);
+            }
+            classificationErrorDataset.addSeries("Hidden Layer Size: " + hiddenS, data);
+        }
+
+        JFreeChart classificationErrorChart = createChart("Classification Error vs Epochs and Hidden Neurons",
+                "Epochs", "Classification Error (%)", classificationErrorDataset);
+
+        //displayChart(classificationErrorChart);//РАСКОММЕНТИРОВАТЬ
+
+        //п. 6 Зависимость погрешности классификации от объема обучающей выборки
+        DefaultXYDataset classificationErrorDataset2 = new DefaultXYDataset();
+
+        int[] trainingSetSizes = {10, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
+
+        double[][] data = new double[2][trainingSetSizes.length];
+
+        for (int i = 0; i < trainingSetSizes.length; i++) {
+            int trainSize2 = trainingSetSizes[i];
+
+            List<double[]> currentTrainInputs = trainInputs.subList(0, trainSize2);
+            List<double[]> currentTrainTargets = trainTargets.subList(0, trainSize2);
+
+            ElmanNetwork elmanNet2 = new ElmanNetwork(inputSize, hiddenSize, outputSize);
+            elmanNet2.train(currentTrainInputs, currentTrainTargets, lambda, learningRate, momentum, epochs);
+            double accuracy = elmanNet2.test(testInputs, testTargets);
+
+            double classificationError = 100 - accuracy; // классификационная погрешность (100 - точность)
+            data[0][i] = trainSize2;
+            data[1][i] = classificationError;
+
+            System.out.printf("Training Set Size: %d, Classification Error: %.5f%%\n",
+                    trainSize2, classificationError);
+        }
+
+        classificationErrorDataset2.addSeries("Classification Error", data);
+
+        JFreeChart classificationErrorChart2 = createChart("Classification Error vs Training Set Size",
+                "Training Set Size", "Classification Error (%)", classificationErrorDataset2);
+
+        displayChart(classificationErrorChart2);
     }
 
 
@@ -284,15 +347,6 @@ public class ElmanNetwork {
             }
         }
         return maxIndex;
-    }
-
-    private static void addDataToDataset(DefaultXYDataset dataset, String seriesName, int[] xData, double[] yData) {
-        double[][] data = new double[2][xData.length];
-        for (int i = 0; i < xData.length; i++) {
-            data[0][i] = xData[i];
-            data[1][i] = yData[i];
-        }
-        dataset.addSeries(seriesName, data);
     }
 
     private static JFreeChart createChart(String title, String xAxisLabel, String yAxisLabel, DefaultXYDataset dataset) {
