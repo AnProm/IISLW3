@@ -152,34 +152,9 @@ public class ElmanNetwork {
         return loss / outputSize;
     }
 
-    public List<IrisEntity> shuffle(List<IrisEntity> list) {
-        List<IrisEntity> shuffledList = new ArrayList<>(list);
-        Collections.shuffle(shuffledList, new Random());
-        return shuffledList;
-    }
-
-    public void train(List<IrisEntity> data, double lambda, double learningRate, double momentum, int epochs) {
-        List<IrisEntity> shuffledData = shuffle(data);
-        List<double[]> inputs = new ArrayList<>();
-        List<double[]> targets = new ArrayList<>();
-
-        for (IrisEntity item : shuffledData) {
-            double[] input = {
-                    item.sepalLengthCm, item.sepalWidthCm,
-                    item.petalLengthCm, item.petalWidthCm
-            };
-            inputs.add(input);
-
-            double[] target = convertToTarget(item.species);
-            targets.add(target);
-        }
-
-        int trainSize = (int) (0.8 * inputs.size());
-        List<double[]> trainInputs = inputs.subList(0, trainSize);
-        List<double[]> trainTargets = targets.subList(0, trainSize);
-        List<double[]> testInputs = inputs.subList(trainSize, inputs.size());
-        List<double[]> testTargets = targets.subList(trainSize, targets.size());
-
+    public double[] train(List<double[]> trainInputs, List<double[]> trainTargets, double lambda, double learningRate, double momentum, int epochs) {
+        double[] errors = new double[epochs];
+        System.out.println("######[START TRAIN FOR "+epochs+"EPOCHS]######");
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalLoss = 0;
             int correctPredictions = 0;
@@ -199,60 +174,16 @@ public class ElmanNetwork {
             }
 
             double epochLoss = totalLoss / trainInputs.size();
+            errors[epoch] = epochLoss;
             double epochAccuracy = ((double) correctPredictions / trainInputs.size()) * 100;
 
             System.out.printf("Epoch %d: Loss = %.5f, Accuracy = %.5f%%\n", epoch + 1, epochLoss, epochAccuracy);
         }
+        System.out.println("######[END TRAIN FOR "+epochs+"EPOCHS]######");
+        return errors;
     }
-
-    public static void main(String[] args) {
-        // Пример использования
-        int inputSize = 4;
-        int hiddenSize = 8;
-        int outputSize = 3;
-
-        ElmanNetwork elmanNet = new ElmanNetwork(inputSize, hiddenSize, outputSize);
-
-        List<IrisEntity> irisData = DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
-        irisData = elmanNet.shuffle(irisData);
-
-        double lambda = 0.001;
-        double learningRate = 0.01;
-        double momentum = 0.9;
-        int epochs = 100;
-
-        elmanNet.train(irisData, lambda, learningRate, momentum, epochs);
-
-        // Пример использования для построения графиков
-        inputSize = 4;
-        outputSize = 3;
-        lambda = 0.001;
-        momentum = 0.9;
-        epochs = 100;
-
-// Значения числа нейронов скрытого слоя для анализа зависимости от погрешности обучения
-        int[] hiddenLayerSizes = {4, 8, 12, 16};
-        int[] epochsValues = {50, 100, 150, 200};
-
-        DefaultXYDataset errorDataset = new DefaultXYDataset();
-
-        for (int hiddenSize1 : hiddenLayerSizes) {
-            double[][] data = new double[2][epochsValues.length];
-            for (int i = 0; i < epochsValues.length; i++) {
-                ElmanNetwork elmanNet1 = new ElmanNetwork(inputSize, hiddenSize1, outputSize);
-                double[] errors = trainAndGetErrors(elmanNet1, irisData, lambda, learningRate, momentum, epochsValues[i]);
-                data[0][i] = epochsValues[i];
-                data[1][i] = errors[epochsValues[i] - 1]; // берем ошибку на последней эпохе
-            }
-            errorDataset.addSeries("Hidden Layer Size: " + hiddenSize1, data);
-        }
-
-        JFreeChart errorChart = createChart("Error vs Epochs", "Epochs", "Error", errorDataset);
-
-        displayChart(errorChart);
-    }
-
-    private static double[] trainAndGetErrors(ElmanNetwork elmanNet, List<IrisEntity> data,
+/*
+    private static double[] trainAndGetErrors(List<double[]> trainInputs, List<double[]> trainTargets, List<IrisEntity> data,
                                               double lambda, double learningRate, double momentum, int epochs) {
         double[] errors = new double[epochs];
         for (int epoch = 0; epoch < epochs; epoch++) {
@@ -271,6 +202,68 @@ public class ElmanNetwork {
             errors[epoch] = totalLoss / data.size();
         }
         return errors;
+    }*/
+
+    public static void main(String[] args) {
+        List<IrisEntity> irisData = DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
+        DatasetUtil.shuffle(irisData);
+
+        List<double[]> inputs = new ArrayList<>();
+        List<double[]> targets = new ArrayList<>();
+
+        for (IrisEntity item : irisData) {
+            double[] input = {
+                    item.sepalLengthCm, item.sepalWidthCm,
+                    item.petalLengthCm, item.petalWidthCm
+            };
+            inputs.add(input);
+
+            double[] target = convertToTarget(item.species);
+            targets.add(target);
+        }
+
+        int trainSize = (int) (0.8 * inputs.size());
+        List<double[]> trainInputs = inputs.subList(0, trainSize);
+        List<double[]> trainTargets = targets.subList(0, trainSize);
+        List<double[]> testInputs = inputs.subList(trainSize, inputs.size());
+        List<double[]> testTargets = targets.subList(trainSize, inputs.size());
+
+
+        int inputSize = 4;
+        int hiddenSize = 8;
+        int outputSize = 3;
+
+        ElmanNetwork elmanNet = new ElmanNetwork(inputSize, hiddenSize, outputSize);
+
+        double lambda = 0.001;
+        double learningRate = 0.01;
+        double momentum = 0.9;
+        int epochs = 100;
+
+        elmanNet.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochs);
+
+        // Пример использования для построения графиков
+        // Значения числа нейронов скрытого слоя для анализа зависимости погрешности обучения
+        int[] hiddenLayerSizes = {4, 8, 12, 16, 256};
+        int[] epochsValues = {50, 100, 150, 200};
+
+        DefaultXYDataset errorDataset = new DefaultXYDataset();
+
+        for (int hiddenSize1 : hiddenLayerSizes) {
+            double[][] data = new double[2][epochsValues.length];
+            for (int i = 0; i < epochsValues.length; i++) {
+                ElmanNetwork elmanNet1 = new ElmanNetwork(inputSize, hiddenSize1, outputSize);
+                System.out.println("############[START TRAIN FOR "+hiddenSize1+" NEURONS]############");
+                double[] errors = elmanNet1.train(trainInputs, trainTargets, lambda, learningRate, momentum, epochsValues[i]);
+                data[0][i] = epochsValues[i];
+                data[1][i] = errors[epochsValues[i] - 1]; // берем ошибку на последней эпохе
+            }
+            errorDataset.addSeries("Hidden Layer Size: " + hiddenSize1, data);
+        }
+
+        JFreeChart errorChart = createChart("Error vs Epochs", "Epochs", "Error", errorDataset);
+
+        displayChart(errorChart);
     }
 
 
