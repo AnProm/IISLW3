@@ -62,7 +62,7 @@ public class ElmanNetwork {
         return 1 / (1 + Math.exp(-x));
     }
 
-    private double[] updateHiddenState(double[] input) { // обновление состояния скрытого слоя
+    private double[] updateHiddenState(double[] input) { // Обновление состояния скрытого слоя и контекстного слоя
         double[] currentHiddenLayer = new double[hiddenSize];
 
         for (int i = 0; i < hiddenSize; i++) {
@@ -95,7 +95,7 @@ public class ElmanNetwork {
         return output;
     }
 
-    private void backPropagationWithMomentum(double[] input, double[] target, double lambda, double learningRate, double momentum) {
+    private void backPropagationWithMomentum(double[] input, double[] target, double lambda, double learningRate, double momentum) {//обратное распространение ошибки
         double[] output = feedForward(input);
 
         double[] outputErrors = new double[outputSize];
@@ -119,20 +119,20 @@ public class ElmanNetwork {
             hiddenErrors[i] = hiddenLayer[i] * (1 - hiddenLayer[i]) * error;//Вычисление ошибок для скрытого слоя
         }
 
-        double[][] inputToHiddenGradients = new double[inputSize][hiddenSize];
+        double[][] inputToHiddenGradients = new double[inputSize][hiddenSize];//Расчет градиентов весов между входным и скрытым слоями
         for (int i = 0; i < inputSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
                 inputToHiddenGradients[i][j] = hiddenErrors[j] * input[i];
             }
         }
 
-        double[][] hiddenToHiddenGradients = new double[hiddenSize][hiddenSize];
+        double[][] hiddenToHiddenGradients = new double[hiddenSize][hiddenSize];//Расчет градиентов скрытого слоя до скрытого слоя
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
                 hiddenToHiddenGradients[i][j] = hiddenErrors[j] * prevHiddenLayer[i];
             }
         }
-
+        //Обновление всех весов
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < outputSize; j++) {
                 double gradient = hiddenToOutputGradients[i][j] - lambda * hiddenToOutputWeights[i][j];
@@ -164,14 +164,14 @@ public class ElmanNetwork {
     private double calculateLoss(double[] output, double[] target) {
         double loss = 0;
         for (int i = 0; i < outputSize; i++) {
-            loss += Math.pow(target[i] - output[i], 2);// Пример использования квадратичной функции потерь (MSE)
+            loss += Math.pow(target[i] - output[i], 2);// Использование квадратичной функции потерь (MSE)
         }
         return loss / outputSize;
     }
 
     public double[] train(List<double[]> trainInputs, List<double[]> trainTargets, double lambda, double learningRate, double momentum, int epochs) {
         double[] errors = new double[epochs];
-        System.out.println("######[START TRAIN FOR "+epochs+"EPOCHS]######");
+        System.out.println("######[START TRAIN FOR "+epochs+" EPOCHS]######");
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalLoss = 0;
             int correctPredictions = 0;
@@ -196,7 +196,7 @@ public class ElmanNetwork {
 
             System.out.printf("Epoch %d: Loss = %.5f, Accuracy = %.5f%%\n", epoch + 1, epochLoss, epochAccuracy);
         }
-        System.out.println("######[END TRAIN FOR "+epochs+"EPOCHS]######");
+        System.out.println("######[END TRAIN FOR "+epochs+" EPOCHS]######");
         return errors;
     }
 /*
@@ -267,8 +267,8 @@ public class ElmanNetwork {
         //4 - ok, 5 - ok, 6 - ok ,7 - ok
 
         double lambda = 0.001;
-        double learningRate = 0.01;
-        double momentum = 0.9;
+        double learningRate = 0.01; //коэффициент скорости обучения, который определяет величину изменения весов на каждой итерации
+        double momentum = 0.9; //коэффициент, который определяет, как сильно предыдущее изменение весов должно влиять на текущее изменение
         int epochs = 30;
 
         //п. 4.1: Погрешность обучения от коэффицента обучения
@@ -283,7 +283,6 @@ public class ElmanNetwork {
 
         //п. 5.1: Погрешность обучения от числа нейронов скрытого слоя
         //п. 7.1: Погрешность обучения от числа эпох
-        // Пример использования для построения графиков
         // Значения числа нейронов скрытого слоя для анализа зависимости погрешности обучения
         int[] hiddenLayerSizes = {4, 8, 12, 16, 256};
         int[] epochsValues = {50, 100, 150, 200};
@@ -338,6 +337,9 @@ public class ElmanNetwork {
         //####################################################
 
         //п. 6 Зависимость погрешности классификации от объема обучающей выборки
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!PRINT DATASET SIZE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         DefaultXYDataset classificationErrorDataset2 = new DefaultXYDataset();
 
         int[] trainingSetSizes = {10, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
