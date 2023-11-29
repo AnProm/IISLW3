@@ -28,6 +28,7 @@ public class ElmanNetwork {
 
     private double[][] prevInputToHiddenGradient;
     private double[][] prevHiddenToOutputGradient;
+    private double[][] prevHiddenToHiddenGradient;
 
     public ElmanNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
@@ -43,6 +44,7 @@ public class ElmanNetwork {
 
         this.prevInputToHiddenGradient = initWeights(inputSize, hiddenSize);
         this.prevHiddenToOutputGradient = initWeights(hiddenSize, outputSize);
+        this.prevHiddenToHiddenGradient = initWeights(hiddenSize, hiddenSize);
     }
 
     private double[][] initWeights(int rows, int cols) {
@@ -120,7 +122,14 @@ public class ElmanNetwork {
         double[][] inputToHiddenGradients = new double[inputSize][hiddenSize];
         for (int i = 0; i < inputSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
-                inputToHiddenGradients[i][j] = hiddenErrors[j] * input[i];//перебор всех весов между входным слоем и скрытым слоем для вычисления градиентов
+                inputToHiddenGradients[i][j] = hiddenErrors[j] * input[i];
+            }
+        }
+
+        double[][] hiddenToHiddenGradients = new double[hiddenSize][hiddenSize];
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                hiddenToHiddenGradients[i][j] = hiddenErrors[j] * prevHiddenLayer[i];
             }
         }
 
@@ -138,7 +147,16 @@ public class ElmanNetwork {
                 double gradient = inputToHiddenGradients[i][j] - lambda * inputToHiddenWeights[i][j];
                 double delta = learningRate * gradient + momentum * prevInputToHiddenGradient[i][j];
                 inputToHiddenWeights[i][j] += delta;
-                prevInputToHiddenGradient[i][j] = delta;//обновление весов между входным и скрытым слоями, применение градиентного спуска с учетом момента для корректировки весов
+                prevInputToHiddenGradient[i][j] = delta;
+            }
+        }
+
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                double gradient = hiddenToHiddenGradients[i][j] - lambda * hiddenToHiddenWeights[i][j];
+                double delta = learningRate * gradient + momentum * prevHiddenToHiddenGradient[i][j];
+                hiddenToHiddenWeights[i][j] += delta;
+                prevHiddenToHiddenGradient[i][j] = delta;
             }
         }
     }
