@@ -199,25 +199,7 @@ public class ElmanNetwork {
         System.out.println("######[END TRAIN FOR "+epochs+" EPOCHS]######");
         return errors;
     }
-/*
-    public double test(List<double[]> testInputs, List<double[]> testTargets) {
-        int correctPredictions = 0;
 
-        for (int i = 0; i < testInputs.size(); i++) {
-            double[] output = feedForward(testInputs.get(i));
-            int predictedClass = getMaxIndex(output);
-            int actualClass = getMaxIndex(testTargets.get(i));
-
-            if (predictedClass == actualClass) {
-                correctPredictions++;
-            }
-        }
-
-        double accuracy = ((double) correctPredictions / testInputs.size()) * 100;
-        System.out.printf("Test Accuracy: %.5f%%\n", accuracy);
-        return accuracy;
-    }
-*/
     public double[] test(List<double[]> testInputs, List<double[]> testTargets) {
         double[] losses = new double[testInputs.size()];
 
@@ -342,19 +324,22 @@ public class ElmanNetwork {
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         DefaultXYDataset classificationErrorDataset2 = new DefaultXYDataset();
 
-        int[] trainingSetSizes = {10, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
+        int[] trainingSetSizes = {60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140};
 
         double[][] data = new double[2][trainingSetSizes.length];
 
         for (int i = 0; i < trainingSetSizes.length; i++) {
             int trainSize2 = trainingSetSizes[i];
 
-            List<double[]> currentTrainInputs = trainInputs.subList(0, trainSize2);
-            List<double[]> currentTrainTargets = trainTargets.subList(0, trainSize2);
+            List<double[]> currentTrainInputs = inputs.subList(0, trainSize2);
+            List<double[]> currentTrainTargets = targets.subList(0, trainSize2);
+
+            List<double[]> currentTestInputs = inputs.subList(trainSize2, inputs.size()-1);
+            List<double[]> currentTestTargets = targets.subList(trainSize2, inputs.size()-1);
 
             ElmanNetwork elmanNet2 = new ElmanNetwork(inputSize, hiddenSize, outputSize);
             elmanNet2.train(currentTrainInputs, currentTrainTargets, lambda, learningRate, momentum, epochs);
-            double[] losses = elmanNet2.test(testInputs, testTargets);
+            double[] losses = elmanNet2.test(currentTestInputs, currentTestTargets);
 
             double sumLosses = 0;
             for (double loss : losses) {
