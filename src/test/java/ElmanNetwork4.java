@@ -308,12 +308,11 @@ public class ElmanNetwork4 {
         double[][] testInputsArray = convertListToArray(testInputs);
         double[][] testTargetsArray = convertListToArray(testTargets);
 
-        // Create and train the network
-        int inputSize = 4; // 4 features in Iris dataset
+        int inputSize = 4; // 4 Признака в датасете
         int hiddenSize = 10;
-        int outputSize = 3; // 3 Iris types
+        int outputSize = 3; // 3 Типа ирисов
 
-        int epochs = 5000;
+        int epochs = 100;
         double learningRate = 0.01;
 
         ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
@@ -322,7 +321,7 @@ public class ElmanNetwork4 {
         network.test(testInputsArray, testTargetsArray);
 
         //#######################P.4############################
-        double[] learningRates = {0.001, 0.01, 0.1, 0.5, 1.0};
+        double[] learningRates = {0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.4, 0.5, 0.75, 1.0};
         double[] lossValues = new double[learningRates.length];
 
         ElmanNetwork4 network2 = new ElmanNetwork4(inputSize, hiddenSize, outputSize);//СОБЛЮДАЕМ ВЕСА
@@ -335,7 +334,8 @@ public class ElmanNetwork4 {
         plotMeanLossVsLearningRate(learningRates, lossValues);
         //#######################P.4#END########################
         //#######################P.5############################
-        int[] hiddenSizes = {5, 10, 15, 20, 25}; // Различные значения числа нейронов в скрытом слое
+        epochs = 5000;
+        int[] hiddenSizes = {4, 6, 8, 10, 12, 16, 32}; // Различные значения числа нейронов в скрытом слое
 
         double[][] res = new ElmanNetwork4().trainWithDifferentHiddenSizes(hiddenSizes, inputsArray, targetsArray,testInputsArray, testTargetsArray, epochs, learningRate);
         double[] trainLosses = res[0];
@@ -343,7 +343,15 @@ public class ElmanNetwork4 {
 
         new ElmanNetwork4().plotLossVsHiddenNeurons(hiddenSizes, trainLosses, testLosses);
         //#######################P.5#END########################
+        //#######################P.6############################
+        double[] trainingSizes = {0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95}; // Различные размеры обучающей выборки
+
+        double[] testLosses2 = new ElmanNetwork4().testWithDifferentTrainingSizes(convertListToArray(inputs), convertListToArray(targets), trainingSizes);
+
+        new ElmanNetwork4().plotLossVsTrainingSize(trainingSizes, testLosses2);
+        //#######################P.6#END########################
     }
+
 
     public static double[][] convertListToArray(List<double[]> list) {
         int size = list.size();
@@ -414,5 +422,40 @@ public class ElmanNetwork4 {
         outp[1] = testLosses;
 
         return outp;
+    }
+
+    public double[] testWithDifferentTrainingSizes(double[][] inputs, double[][] targets, double[] trainingSizes) {
+        double[] testLosses = new double[trainingSizes.length];
+        int epochs = 5000;
+        int inputSize = 4;
+        int hiddenSize = 10;
+        int outputSize = 3;
+        double learningRate = 0.1;
+
+        for (int i = 0; i < trainingSizes.length; i++) {
+            double trainingSize = trainingSizes[i];
+            double[][] trainInputs = Arrays.copyOfRange(inputs, 0, (int) (trainingSize*inputs.length));
+            double[][] trainTargets = Arrays.copyOfRange(targets, 0, (int)(trainingSize*inputs.length));
+
+            double[][] testInputs = Arrays.copyOfRange(inputs, (int)(trainingSize*inputs.length), inputs.length-1);
+            double[][] testTargets = Arrays.copyOfRange(targets, (int)(trainingSize*inputs.length), inputs.length-1);
+
+            ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
+            network.train(trainInputs, trainTargets, epochs, learningRate);
+            testLosses[i] = network.test(testInputs, testTargets);
+        }
+
+        return testLosses;
+    }
+
+    public void plotLossVsTrainingSize(double[] trainingSizes, double[] testLosses) {
+        Plot2DPanel plot = new Plot2DPanel();
+        plot.addLinePlot("Test Loss vs Training Size", trainingSizes, testLosses);
+
+        JFrame frame = new JFrame("Loss vs Training Size");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setContentPane(plot);
+        frame.setVisible(true);
     }
 }
