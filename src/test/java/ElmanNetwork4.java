@@ -96,7 +96,7 @@ public class ElmanNetwork4 {
         return output;
     }
 
-    private void backwardPropagation(double[] input, double[] target) {
+    private void backwardPropagation(double[] input, double[] target, double learningRate) {
         // Backward pass through the network to update weights
         double[] output = forwardPropagation(input);
 
@@ -138,7 +138,7 @@ public class ElmanNetwork4 {
         }
     }
 
-    public void train(double[][] inputs, double[][] targets, int epochs) {
+    public void train(double[][] inputs, double[][] targets, int epochs, double learningRate) {
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalLoss = 0.0;
             int correctPredictions = 0;
@@ -157,7 +157,7 @@ public class ElmanNetwork4 {
                 totalLoss += loss / outputSize;
 
                 // Update weights via backpropagation
-                backwardPropagation(input, target);
+                backwardPropagation(input, target, learningRate);
 
                 // Check accuracy
                 boolean correct = true;
@@ -266,9 +266,10 @@ public class ElmanNetwork4 {
         int outputSize = 3; // 3 Iris types
 
         int epochs = 5000;
+        double learningRate = 0.01;
 
         ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
-        network.train(inputsArray, targetsArray, epochs);
+        network.train(inputsArray, targetsArray, epochs, learningRate);
 
         // Test the network
         network.test(testInputsArray, testTargetsArray);
