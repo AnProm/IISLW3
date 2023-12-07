@@ -301,9 +301,10 @@ public class ElmanNetwork4 {
         List<double[]> testInputs = inputs.subList(trainSize, inputs.size());
         List<double[]> testTargets = targets.subList(trainSize, inputs.size());
 
+        //Для обучения
         double[][] inputsArray = convertListToArray(trainInputs);
         double[][] targetsArray = convertListToArray(trainTargets);
-
+        //Для тестирования
         double[][] testInputsArray = convertListToArray(testInputs);
         double[][] testTargetsArray = convertListToArray(testTargets);
 
@@ -333,6 +334,15 @@ public class ElmanNetwork4 {
 
         plotMeanLossVsLearningRate(learningRates, lossValues);
         //#######################P.4#END########################
+        //#######################P.5############################
+        int[] hiddenSizes = {5, 10, 15, 20, 25}; // Различные значения числа нейронов в скрытом слое
+
+        double[][] res = new ElmanNetwork4().trainWithDifferentHiddenSizes(hiddenSizes, inputsArray, targetsArray,testInputsArray, testTargetsArray, epochs, learningRate);
+        double[] trainLosses = res[0];
+        double[] testLosses = res[1];
+
+        new ElmanNetwork4().plotLossVsHiddenNeurons(hiddenSizes, trainLosses, testLosses);
+        //#######################P.5#END########################
     }
 
     public static double[][] convertListToArray(List<double[]> list) {
@@ -350,7 +360,7 @@ public class ElmanNetwork4 {
 
 
     public static void plotMeanLossVsLearningRate(double[] learningRates, double[] lossValues) {
-        Plot2DPanel plot = new Plot2DPanel();
+        Plot2DPanel plot = new Plot2DPanel("LEARNING RATE");
         plot.addLinePlot("Mean Loss vs Learning Rate", learningRates, lossValues);
 
         JFrame frame = new JFrame("Mean Loss vs Learning Rate");
@@ -363,27 +373,46 @@ public class ElmanNetwork4 {
 
     //tyajelo...
 
-    public double[] trainWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets, int epochs, double learningRate) {
+    public void plotLossVsHiddenNeurons(int[] hiddenSizes, double[] trainLosses, double[] testLosses) {
+        Plot2DPanel plot = new Plot2DPanel();
+        plot.addLinePlot("Train Loss vs Hidden Neurons", intArrayToDoubleArray(hiddenSizes), trainLosses);
+        plot.addLinePlot("Test Loss vs Hidden Neurons", intArrayToDoubleArray(hiddenSizes), testLosses);
+
+        JFrame frame = new JFrame("Loss vs Hidden Neurons");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setContentPane(plot);
+        frame.setVisible(true);
+    }
+
+    public static double[] intArrayToDoubleArray(int[] intArray) {
+        double[] doubleArray = new double[intArray.length];
+
+        for (int i = 0; i < intArray.length; i++) {
+            doubleArray[i] = (double) intArray[i];
+        }
+
+        return doubleArray;
+    }
+
+    public double[][] trainWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets,double[][] inputsTEST, double[][] targetsTEST, int epochs, double learningRate) {
         double[] trainLosses = new double[hiddenSizes.length];
+        double[] testLosses = new double[hiddenSizes.length];
+        int inputSize = 4;
+        int outputSize = 3;
+        learningRate = 0.1;
 
         for (int i = 0; i < hiddenSizes.length; i++) {
             int hiddenSize = hiddenSizes[i];
             ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
             trainLosses[i] = network.train(inputs, targets, epochs, learningRate);
+            testLosses[i] = network.test(inputsTEST, targetsTEST);
         }
 
-        return trainLosses;
-    }
+        double[][] outp = new double[2][hiddenSizes.length];
+        outp[0] = trainLosses;
+        outp[1] = testLosses;
 
-    public double[] testWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets) {
-        double[] testLosses = new double[hiddenSizes.length];
-
-        for (int i = 0; i < hiddenSizes.length; i++) {
-            int hiddenSize = hiddenSizes[i];
-            ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
-            testLosses[i] = network.test(inputs, targets);
-        }
-
-        return testLosses;
+        return outp;
     }
 }
