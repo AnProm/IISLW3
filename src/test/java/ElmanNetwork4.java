@@ -3,7 +3,10 @@ import Dataset.IrisEntity;
 
 import javax.swing.*;
 import org.math.plot.Plot2DPanel;
+import org.math.plot.PlotPanel;
+import org.math.plot.plotObjects.BaseLabel;
 
+import java.awt.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -350,6 +353,13 @@ public class ElmanNetwork4 {
 
         new ElmanNetwork4().plotLossVsTrainingSize(trainingSizes, testLosses2);
         //#######################P.6#END########################
+        //#######################P.7############################
+        int[] epochValues = {100, 200, 300, 400, 500, 600, 700}; // Различные значения числа эпох обучения
+
+        double[] testLosses3 = new ElmanNetwork4().testWithDifferentEpochs(inputsArray, targetsArray, epochValues);
+
+        new ElmanNetwork4().plotLossVsEpochs(epochValues, testLosses3);
+        //#######################P.7#END########################
     }
 
 
@@ -368,7 +378,7 @@ public class ElmanNetwork4 {
 
 
     public static void plotMeanLossVsLearningRate(double[] learningRates, double[] lossValues) {
-        Plot2DPanel plot = new Plot2DPanel("LEARNING RATE");
+        Plot2DPanel plot = new Plot2DPanel(PlotPanel.SOUTH);
         plot.addLinePlot("Mean Loss vs Learning Rate", learningRates, lossValues);
 
         JFrame frame = new JFrame("Mean Loss vs Learning Rate");
@@ -382,8 +392,8 @@ public class ElmanNetwork4 {
     //tyajelo...
 
     public void plotLossVsHiddenNeurons(int[] hiddenSizes, double[] trainLosses, double[] testLosses) {
-        Plot2DPanel plot = new Plot2DPanel();
-        plot.addLinePlot("Train Loss vs Hidden Neurons", intArrayToDoubleArray(hiddenSizes), trainLosses);
+        Plot2DPanel plot = new Plot2DPanel(PlotPanel.SOUTH);
+        plot.addLinePlot("Train Loss vs Hidden Neurons", Color.BLACK, intArrayToDoubleArray(hiddenSizes), trainLosses);
         plot.addLinePlot("Test Loss vs Hidden Neurons", intArrayToDoubleArray(hiddenSizes), testLosses);
 
         JFrame frame = new JFrame("Loss vs Hidden Neurons");
@@ -449,10 +459,40 @@ public class ElmanNetwork4 {
     }
 
     public void plotLossVsTrainingSize(double[] trainingSizes, double[] testLosses) {
-        Plot2DPanel plot = new Plot2DPanel();
+        Plot2DPanel plot = new Plot2DPanel(PlotPanel.SOUTH);
         plot.addLinePlot("Test Loss vs Training Size", trainingSizes, testLosses);
 
         JFrame frame = new JFrame("Loss vs Training Size");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setContentPane(plot);
+        frame.setVisible(true);
+    }
+
+    public double[] testWithDifferentEpochs(double[][] inputs, double[][] targets, int[] epochValues) {
+        double[] testLosses = new double[epochValues.length];
+        int inputSize = 4;
+        int hiddenSize = 10;
+        int outputSize = 3;
+        double learningRate = 0.1;
+
+
+        for (int i = 0; i < epochValues.length; i++) {
+            int epochs = epochValues[i];
+
+            ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
+            network.train(inputs, targets, epochs, learningRate);
+            testLosses[i] = network.test(inputs, targets);
+        }
+
+        return testLosses;
+    }
+
+    public void plotLossVsEpochs(int[] epochValues, double[] testLosses) {
+        Plot2DPanel plot = new Plot2DPanel(PlotPanel.SOUTH);
+        plot.addLinePlot("Test Loss vs Epochs", intArrayToDoubleArray(epochValues), testLosses);
+
+        JFrame frame = new JFrame("Loss vs Epochs");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setContentPane(plot);
