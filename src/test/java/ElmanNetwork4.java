@@ -1,15 +1,13 @@
 import Dataset.DatasetUtil;
 import Dataset.IrisEntity;
-
-import javax.swing.*;
 import org.math.plot.Plot2DPanel;
 import org.math.plot.PlotPanel;
-import org.math.plot.plotObjects.BaseLabel;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ElmanNetwork4 {
@@ -273,7 +271,7 @@ public class ElmanNetwork4 {
             this.weightsInputHidden = (double[][]) inputStream.readObject();
             this.weightsHiddenOutput = (double[][]) inputStream.readObject();
             this.contextWeights = (double[][]) inputStream.readObject();
-            this.hiddenLayer = (double[])  inputStream.readObject();
+            this.hiddenLayer = (double[]) inputStream.readObject();
             this.contextLayer = (double[]) inputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -340,7 +338,7 @@ public class ElmanNetwork4 {
         epochs = 5000;
         int[] hiddenSizes = {4, 6, 8, 10, 12, 16, 32}; // Различные значения числа нейронов в скрытом слое
 
-        double[][] res = new ElmanNetwork4().trainWithDifferentHiddenSizes(hiddenSizes, inputsArray, targetsArray,testInputsArray, testTargetsArray, epochs, learningRate);
+        double[][] res = new ElmanNetwork4().trainWithDifferentHiddenSizes(hiddenSizes, inputsArray, targetsArray, testInputsArray, testTargetsArray, epochs, learningRate);
         double[] trainLosses = res[0];
         double[] testLosses = res[1];
 
@@ -413,7 +411,7 @@ public class ElmanNetwork4 {
         return doubleArray;
     }
 
-    public double[][] trainWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets,double[][] inputsTEST, double[][] targetsTEST, int epochs, double learningRate) {
+    public double[][] trainWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets, double[][] inputsTEST, double[][] targetsTEST, int epochs, double learningRate) {
         double[] trainLosses = new double[hiddenSizes.length];
         double[] testLosses = new double[hiddenSizes.length];
         int inputSize = 4;
@@ -444,11 +442,11 @@ public class ElmanNetwork4 {
 
         for (int i = 0; i < trainingSizes.length; i++) {
             double trainingSize = trainingSizes[i];
-            double[][] trainInputs = Arrays.copyOfRange(inputs, 0, (int) (trainingSize*inputs.length));
-            double[][] trainTargets = Arrays.copyOfRange(targets, 0, (int)(trainingSize*inputs.length));
+            double[][] trainInputs = Arrays.copyOfRange(inputs, 0, (int) (trainingSize * inputs.length));
+            double[][] trainTargets = Arrays.copyOfRange(targets, 0, (int) (trainingSize * inputs.length));
 
-            double[][] testInputs = Arrays.copyOfRange(inputs, (int)(trainingSize*inputs.length), inputs.length-1);
-            double[][] testTargets = Arrays.copyOfRange(targets, (int)(trainingSize*inputs.length), inputs.length-1);
+            double[][] testInputs = Arrays.copyOfRange(inputs, (int) (trainingSize * inputs.length), inputs.length - 1);
+            double[][] testTargets = Arrays.copyOfRange(targets, (int) (trainingSize * inputs.length), inputs.length - 1);
 
             ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
             network.train(trainInputs, trainTargets, epochs, learningRate);
