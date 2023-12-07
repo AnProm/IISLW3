@@ -1,22 +1,23 @@
 import Dataset.DatasetUtil;
 import Dataset.IrisEntity;
 
+import javax.swing.*;
+import org.math.plot.Plot2DPanel;
+
+import java.io.*;
 import java.util.Arrays;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ElmanNetwork4 {
-    private final int inputSize;
-    private final int hiddenSize;
-    private final int outputSize;
-    private final double[][] weightsInputHidden;
-    private final double[][] weightsHiddenOutput;
-    private final double[][] contextWeights;
-    private final double[] hiddenLayer;
-    private final double[] contextLayer;
+    private int inputSize;
+    private int hiddenSize;
+    private int outputSize;
+    private double[][] weightsInputHidden;
+    private double[][] weightsHiddenOutput;
+    private double[][] contextWeights;
+    private double[] hiddenLayer;
+    private double[] contextLayer;
 
     private double learningRate = 0.01; // Попробуйте уменьшить learning rate
 
@@ -34,6 +35,9 @@ public class ElmanNetwork4 {
         this.contextLayer = new double[hiddenSize];
 
         initializeWeights();
+    }
+
+    public ElmanNetwork4() {
     }
 
     private void initializeWeights() {
@@ -244,6 +248,35 @@ public class ElmanNetwork4 {
         return target;
     }
 
+    public void saveToFile() {
+        String filename = "C:\\Users\\user\\Desktop\\NNELMAN.txt";
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(filename))) {
+            // Save weights and context layer
+            outputStream.writeObject(this.weightsInputHidden);
+            outputStream.writeObject(this.weightsHiddenOutput);
+            outputStream.writeObject(this.contextWeights);
+            outputStream.writeObject(this.hiddenLayer);
+            outputStream.writeObject(this.contextLayer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void loadFromFile() {
+        String filename = "C:\\Users\\user\\Desktop\\NNELMAN.txt";
+        try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(filename))) {
+            // Load weights and context layer
+            this.weightsInputHidden = (double[][]) inputStream.readObject();
+            this.weightsHiddenOutput = (double[][]) inputStream.readObject();
+            this.contextWeights = (double[][]) inputStream.readObject();
+            this.hiddenLayer = (double[])  inputStream.readObject();
+            this.contextLayer = (double[]) inputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
         List<IrisEntity> irisData = DatasetUtil.readDataset("C:\\Users\\user\\IdeaProjects\\IISLW3\\source\\Iris.csv", DatasetUtil.IRIS);
         DatasetUtil.shuffle(irisData);
@@ -284,9 +317,22 @@ public class ElmanNetwork4 {
 
         ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
         network.train(inputsArray, targetsArray, epochs, learningRate);
-
         // Test the network
         network.test(testInputsArray, testTargetsArray);
+
+        //#######################P.4############################
+        double[] learningRates = {0.001, 0.01, 0.1, 0.5, 1.0};
+        double[] lossValues = new double[learningRates.length];
+
+        ElmanNetwork4 network2 = new ElmanNetwork4(inputSize, hiddenSize, outputSize);//СОБЛЮДАЕМ ВЕСА
+        network2.saveToFile();
+        for (int i = 0; i < learningRates.length; i++) {
+            network2.loadFromFile();
+            lossValues[i] = network2.train(inputsArray, targetsArray, epochs, learningRates[i]);
+        }
+
+        plotMeanLossVsLearningRate(learningRates, lossValues);
+        //#######################P.4#END########################
     }
 
     public static double[][] convertListToArray(List<double[]> list) {
@@ -300,5 +346,44 @@ public class ElmanNetwork4 {
         }
 
         return array;
+    }
+
+
+    public static void plotMeanLossVsLearningRate(double[] learningRates, double[] lossValues) {
+        Plot2DPanel plot = new Plot2DPanel();
+        plot.addLinePlot("Mean Loss vs Learning Rate", learningRates, lossValues);
+
+        JFrame frame = new JFrame("Mean Loss vs Learning Rate");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setContentPane(plot);
+        frame.setVisible(true);
+    }
+
+
+    //tyajelo...
+
+    public double[] trainWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets, int epochs, double learningRate) {
+        double[] trainLosses = new double[hiddenSizes.length];
+
+        for (int i = 0; i < hiddenSizes.length; i++) {
+            int hiddenSize = hiddenSizes[i];
+            ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
+            trainLosses[i] = network.train(inputs, targets, epochs, learningRate);
+        }
+
+        return trainLosses;
+    }
+
+    public double[] testWithDifferentHiddenSizes(int[] hiddenSizes, double[][] inputs, double[][] targets) {
+        double[] testLosses = new double[hiddenSizes.length];
+
+        for (int i = 0; i < hiddenSizes.length; i++) {
+            int hiddenSize = hiddenSizes[i];
+            ElmanNetwork4 network = new ElmanNetwork4(inputSize, hiddenSize, outputSize);
+            testLosses[i] = network.test(inputs, targets);
+        }
+
+        return testLosses;
     }
 }
