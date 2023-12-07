@@ -138,7 +138,10 @@ public class ElmanNetwork4 {
         }
     }
 
-    public void train(double[][] inputs, double[][] targets, int epochs, double learningRate) {
+    public double train(double[][] inputs, double[][] targets, int epochs, double learningRate) {
+        double globalMeanLoss = 0.0;//надстройка
+        double globalAccuracy = 0.0;//надстройка
+
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalLoss = 0.0;
             int correctPredictions = 0;
@@ -175,11 +178,20 @@ public class ElmanNetwork4 {
             double accuracy = (double) correctPredictions / inputs.length;
             double meanLoss = totalLoss / inputs.length;
 
+            globalAccuracy += accuracy;//надстройка
+            globalMeanLoss += meanLoss;//надстройка
+
             System.out.println("Epoch: " + (epoch + 1) + " - Loss: " + meanLoss + " - Accuracy: " + accuracy);
         }
+
+        globalMeanLoss /= epochs;//надстройка (на выбор)
+        globalAccuracy /= epochs;//надстройка
+
+        return globalMeanLoss;
+
     }
 
-    public void test(double[][] inputs, double[][] targets) {
+    public double test(double[][] inputs, double[][] targets) {
         double totalLoss = 0.0;
         int correctPredictions = 0;
 
@@ -213,6 +225,8 @@ public class ElmanNetwork4 {
         double meanLoss = totalLoss / inputs.length;
 
         System.out.println("Test Results - Loss: " + meanLoss + " - Accuracy: " + accuracy);
+
+        return meanLoss;//на выбор
     }
 
     private double[] roundOutput(double[] output) {
